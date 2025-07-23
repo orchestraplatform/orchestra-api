@@ -43,7 +43,6 @@ curl -X POST "http://localhost:8000/api/v1/workshops/" \
   -d '{
     "name": "my-workshop",
     "duration": "4h",
-    "participants": 1,
     "image": "rocker/rstudio:latest",
     "resources": {
       "cpu": "1",

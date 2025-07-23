@@ -48,7 +48,6 @@ class WorkshopCreate(BaseModel):
     """Request model for creating a workshop."""
     name: str = Field(..., description="Workshop name")
     duration: str = Field(default="4h", description="Workshop duration")
-    participants: int = Field(default=1, description="Number of participants")
     image: str = Field(default="rocker/rstudio:latest", description="RStudio image")
     resources: WorkshopResources = Field(default_factory=WorkshopResources)
     storage: Optional[WorkshopStorage] = Field(default=None)
@@ -58,7 +57,6 @@ class WorkshopCreate(BaseModel):
 class WorkshopUpdate(BaseModel):
     """Request model for updating a workshop."""
     duration: Optional[str] = None
-    participants: Optional[int] = None
     resources: Optional[WorkshopResources] = None
 
 

@@ -139,7 +139,6 @@ class WorkshopService:
             "spec": {
                 "name": workshop.name,
                 "duration": workshop.duration,
-                "participants": workshop.participants,
                 "image": workshop.image,
                 "resources": {
                     "cpu": workshop.resources.cpu,
@@ -233,7 +232,6 @@ class WorkshopService:
         return WorkshopCreate(
             name=spec.get("name"),
             duration=spec.get("duration", "4h"),
-            participants=spec.get("participants", 1),
             image=spec.get("image", "rocker/rstudio:latest"),
             resources=resources,
             storage=storage,

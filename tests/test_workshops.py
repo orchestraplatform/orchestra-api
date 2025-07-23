@@ -32,7 +32,6 @@ def test_create_workshop(client, mock_k8s_client):
     workshop_data = {
         "name": "test-workshop",
         "duration": "4h",
-        "participants": 1,
         "image": "rocker/rstudio:latest"
     }
     
