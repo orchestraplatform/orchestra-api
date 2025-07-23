@@ -128,9 +128,66 @@ docs url=api_url:
 redoc url=api_url:
     open "{{url}}/redoc"
 
-# Generate OpenAPI spec file
+# Generate OpenAPI spec file from running API
 openapi-spec url=api_url:
     curl "{{url}}/openapi.json" | jq > openapi.json
+
+# Generate OpenAPI schema directly from FastAPI app (no server required)
+generate-schema output="openapi.json":
+    @echo "📋 Generating OpenAPI schema to {{output}}"
+    uv run python -c "
+import json
+from main import app
+schema = app.openapi()
+with open('{{output}}', 'w') as f:
+    json.dump(schema, f, indent=2)
+"
+    @echo "✅ Schema generated at {{output}}"
+
+# Serve OpenAPI schema file on localhost:8001 for frontend development
+serve-schema port="8001":
+    @echo "🌐 Serving OpenAPI schema at http://localhost:{{port}}/openapi.json"
+    uv run python -c "
+import json
+import http.server
+import socketserver
+from pathlib import Path
+
+class SchemaHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/openapi.json':
+            if Path('openapi.json').exists():
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                with open('openapi.json', 'rb') as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_error(404, 'Schema file not found. Run: just generate-schema')
+        else:
+            self.send_error(404, 'Only /openapi.json is available')
+
+with socketserver.TCPServer(('', {{port}}), SchemaHandler) as httpd:
+    print('Serving schema at http://localhost:{{port}}/openapi.json')
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print('\\nSchema server stopped')
+"
+
+# Update frontend types from generated schema
+update-frontend-types frontend_path="../orchestra-frontend":
+    @echo "🔄 Updating frontend types from API schema"
+    just generate-schema
+    cd {{frontend_path}} && just generate-types-file ../orchestra-api/openapi.json
+    @echo "✅ Frontend types updated from static schema"
+
+# Update frontend types from running API
+update-frontend-types-live frontend_path="../orchestra-frontend" url=api_url:
+    @echo "🔄 Updating frontend types from running API at {{url}}"
+    cd {{frontend_path}} && just generate-types {{url}}
+    @echo "✅ Frontend types updated from running API"
 
 # === Kubernetes Integration ===
 
@@ -189,11 +246,12 @@ clear-workshops:
 
 # === Development Workflow ===
 
-# Complete development setup
-setup: install-deps
+# Complete development setup with schema generation
+setup: install-deps generate-schema
     echo "Orchestra API development environment ready!"
     echo "Run 'just dev' to start the API server"
     echo "Run 'just docs' to open API documentation"
+    echo "Run 'just update-frontend-types' to sync types with frontend"
 
 # Full test suite and quality checks
 ci: quality test
@@ -214,3 +272,28 @@ metrics url=api_url:
 # Tail API logs (assumes you're running with systemd or similar)
 logs:
     journalctl -f -u orchestra-api || echo "Not running as a service"
+
+# === Frontend Integration ===
+
+# Start API in background for frontend development
+dev-for-frontend:
+    @echo "🚀 Starting API in background for frontend development"
+    just run-bg
+    sleep 2
+    just health
+    @echo "✅ API ready for frontend at {{api_url}}"
+
+# Full development setup for frontend work
+frontend-dev-setup frontend_path="../orchestra-frontend":
+    @echo "🔧 Setting up full-stack development environment"
+    just dev-for-frontend
+    just update-frontend-types-live {{frontend_path}}
+    @echo "✅ Both API and frontend types are ready"
+
+# Development cycle: update API, regenerate schema, update frontend types
+dev-cycle frontend_path="../orchestra-frontend":
+    @echo "🔄 Running development cycle"
+    just quality
+    just generate-schema
+    cd {{frontend_path}} && just generate-types-file ../orchestra-api/openapi.json
+    @echo "✅ Development cycle complete - API validated, schema updated, frontend types synced"

@@ -57,15 +57,21 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=[
+        "http://localhost:3000",  # React development server
+        "http://localhost:5173",  # Vite development server
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        # Add production frontend URLs here
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(workshops.router, prefix="/api/v1/workshops", tags=["workshops"])
+app.include_router(health.router, tags=["health"])
+app.include_router(workshops.router, prefix="/workshops", tags=["workshops"])
 
 
 @app.get("/", response_model=dict)
