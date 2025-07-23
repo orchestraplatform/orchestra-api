@@ -135,46 +135,13 @@ openapi-spec url=api_url:
 # Generate OpenAPI schema directly from FastAPI app (no server required)
 generate-schema output="openapi.json":
     @echo "📋 Generating OpenAPI schema to {{output}}"
-    uv run python -c "
-import json
-from main import app
-schema = app.openapi()
-with open('{{output}}', 'w') as f:
-    json.dump(schema, f, indent=2)
-"
+    uv run python generate_schema.py {{output}}
     @echo "✅ Schema generated at {{output}}"
 
 # Serve OpenAPI schema file on localhost:8001 for frontend development
 serve-schema port="8001":
     @echo "🌐 Serving OpenAPI schema at http://localhost:{{port}}/openapi.json"
-    uv run python -c "
-import json
-import http.server
-import socketserver
-from pathlib import Path
-
-class SchemaHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/openapi.json':
-            if Path('openapi.json').exists():
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.end_headers()
-                with open('openapi.json', 'rb') as f:
-                    self.wfile.write(f.read())
-            else:
-                self.send_error(404, 'Schema file not found. Run: just generate-schema')
-        else:
-            self.send_error(404, 'Only /openapi.json is available')
-
-with socketserver.TCPServer(('', {{port}}), SchemaHandler) as httpd:
-    print('Serving schema at http://localhost:{{port}}/openapi.json')
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print('\\nSchema server stopped')
-"
+    uv run python serve_schema.py {{port}}
 
 # Update frontend types from generated schema
 update-frontend-types frontend_path="../orchestra-frontend":
