@@ -39,12 +39,37 @@ class Settings(BaseSettings):
     # Security
     cors_origins: list = ["*"]
     
+    # Authentication settings
+    secret_key: str = "your-secret-key-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+    
+    # OAuth settings
+    oauth_client_id: Optional[str] = None
+    oauth_client_secret: Optional[str] = None
+    oauth_redirect_uri: str = "http://localhost:3000/auth/callback"
+    oauth_provider: str = "github"  # github, google, oidc
+    
+    # OIDC settings (for institutional SSO)
+    oidc_issuer: Optional[str] = None
+    oidc_audience: Optional[str] = None
+    
+    # Workshop access control
+    require_authentication: bool = True
+    allow_anonymous_read: bool = False
+    
     class Config:
         env_prefix = "ORCHESTRA_"
         case_sensitive = False
+        env_file = ".env"
 
 
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
+
+if __name__ == "__main__":
+    settings = get_settings()
+    print(f"Orchestra API Settings: {settings.model_dump()}")

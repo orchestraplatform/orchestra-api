@@ -11,7 +11,10 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "kubernetes>=29.0.0",
     "python-dateutil>=2.8.0",
-    "python-multipart>=0.0.6",  # For form data
+    "python-multipart>=0.0.6",
+    "passlib[bcrypt]>=1.7.4",
+    "httpx>=0.28.1",
+    "pyjwt[crypto]>=2.10.1",
 ]
 
 [project.optional-dependencies]

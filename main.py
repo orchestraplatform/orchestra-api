@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 import uvicorn
 
-from api.routes import workshops, health
+from api.routes import workshops, health, auth
 from api.core.config import get_settings
 from api.core.kubernetes import get_k8s_client
 
@@ -62,6 +62,8 @@ app.add_middleware(
         "http://localhost:5173",  # Vite development server
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "https://app.orchestraplatform.org",  # Production frontend
         # Add production frontend URLs here
     ],
     allow_credentials=True,
@@ -71,6 +73,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, tags=["health"])
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(workshops.router, prefix="/workshops", tags=["workshops"])
 
 
